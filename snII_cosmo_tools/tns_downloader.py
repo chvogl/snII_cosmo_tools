@@ -15,7 +15,7 @@ class TNSDownloader(object):
 
     compact_repr = ['Name', 'RA', 'DEC', 'Obj. Type', 'Redshift',
                     'Host Name', 'Host Redshift', 'Discovering Group/s',
-                    'Classifying Group/s'  # , 'Disc. Internal Name',
+                    'Classifying Group/s', 'Disc. Internal Name',
                     'Discovery Mag', 'Discovery Mag Filter',
                     'Discovery Date (UT)']
 

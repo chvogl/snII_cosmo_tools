@@ -51,4 +51,4 @@ class GladeRedshiftCatalogue(object):
                                                         units.deg))
 
         return self.find_host_z(target_coords, mag=row['Discovery Mag'],
-                                max_dist_kpc=20.)
+                                max_dist_kpc=max_dist_kpc)

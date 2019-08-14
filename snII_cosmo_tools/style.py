@@ -1,6 +1,13 @@
 import numpy as np
 from tns_downloader import TNSDownloader
 
+survey_link_dict = {
+    'ALeRCE': 'http://alerce.online/vue/object/',
+    'ZTF': 'http://alerce.online/vue/object/',
+    'ATLAS': 'https://star.pst.qub.ac.uk/sne/atlas4/',
+    'Pan-STARRS1': 'https://star.pst.qub.ac.uk/sne/ps13pi/psdb/'
+}
+
 
 def highlight_dec_cut(s):
     dec = [float(s1.split(':')[0]) for s1 in s]
@@ -54,6 +61,24 @@ def insert_tns_links_into_df(targets):
     names = targets.Name.copy()
     targets['Name'] = links
     return targets, names
+
+
+def insert_survey_links_into_df(targets):
+    links = []
+    for groups, name in zip(targets['Discovering Group/s'],
+                            targets['Disc. Internal Name']):
+        groups = groups.split(',')
+        group = groups[0]
+        if group in survey_link_dict:
+            link = survey_link_dict[group]
+            if group not in ['ATLAS', 'Pan-STARRS1']:
+                link += name
+            link = '<a href="{1}" target="_blank">{0}</a>'.format(name, link)
+        else:
+            link = name
+        links.append(link)
+    targets['Disc. Internal Name'] = links
+    return targets
 
 
 def get_styled_html_table(targets):

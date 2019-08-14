@@ -5,3 +5,5 @@ __pycache__/
 *.py[cod]
 
 *.bak
+generated_obs/
+redshift_data/

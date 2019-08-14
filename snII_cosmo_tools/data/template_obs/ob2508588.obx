@@ -1,0 +1,70 @@
+name                            "TOO_SN-classification-faint"
+userComments                    "V=21.5"
+InstrumentComments              ""
+userPriority                    "1"
+type                            "O"
+
+
+TARGET.NAME                     "SN2019xyz"
+propRA                          "0.0"
+propDec                         "0.0"
+diffRA                          "0.0"
+diffDec                         "0.0"
+equinox                         "2000"
+epoch                           "2000.0"
+ra                              "00:00:00.000"
+dec                             "00:00:00.000"
+
+
+CONSTRAINT.SET.NAME             "classification-faint"
+seeing                          "1.5"
+sky_transparency                "Clear"
+air_mass                        "1.8"
+fractional_lunar_illumination   "1.0"
+moon_angular_distance           "30"
+strehlratio                     "0.0"
+twilight                        "0"
+watervapour                     "30.0"
+atm                             "no constraint"
+contrast                        "0.0"
+description                     ""
+
+
+OBSERVATION.DESCRIPTION.NAME    "classification - faint"
+instrument                      "FORS2"
+
+
+ACQUISITION.TEMPLATE.NAME       "FORS2_lss_acq_fast"
+DET.WIN1.UIT1                   "30.0"
+SEQ.CCD                         "ANY"
+TEL.ROT.OFFANGLE                "9999.0"
+TEL.AG.GUIDESTAR                "CATALOGUE"
+TEL.GS1.ALPHA                   "00:00:00.000"
+TEL.GS1.DELTA                   "00:00:00.000"
+INS.COLL.NAID                   "COLL_SR+6"
+INS.FILT1.NAME                  "v_HIGH+114"
+INS.SLIT.NAID                   "lSlit1_0arcsec"
+
+
+TEMPLATE.NAME                   "FORS2_lss_obs_slit_fast"
+DET.WIN1.UIT1                   "30.0"
+TEL.TARG.OFFSETALPHA            "0.0"
+TEL.TARG.OFFSETDELTA            "0.0"
+INS.FILT1.NAME                  "v_HIGH+114"
+INS.SLIT.NAID                   "lSlit1_0arcsec"
+
+
+TEMPLATE.NAME                   "FORS2_lss_obs_off_fast"
+DET.WIN1.UIT1                   "2700.0"
+DET.READ.CLKIND                 "100kHz,2x2,high"
+SEQ.CATG                        "SCIENCE"
+SEQ.NEXPO                       "1"
+SEQ.NOFF                        "1"
+TEL.TARG.OFFSETY                "0.0"
+INS.FILT1.NAME                  "none"
+INS.GRIS.NAME                   "GRIS_300V+10"
+INS.SLIT.NAID                   "lSlit1_0arcsec"
+
+
+
+

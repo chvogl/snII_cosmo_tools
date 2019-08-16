@@ -31,7 +31,7 @@ class OBGenerator(object):
     value_regex = re.compile('(?<=\")(?P<name>\S*)(?=\")') # noqa
 
     def __init__(self, target_name, coords, magnitude,
-                 template_ob='data/template_obs/ob2508588.obx',
+                 template_ob='data/template_obs/ob_classification_faint.obx',
                  prefix='TOO_', dest_path='data/generated_obs'):
         self.target_name = target_name
         self.coords = coords

@@ -6,6 +6,7 @@ git clone https://github.com/chvogl/snII_cosmo_tools.git
 cd snII_cosmo_tools
 conda env create -f env.yml
 conda activate snII_cosmo_tools
+python setup.py install
 cd snII_cosmo_tools
 mkdir redshift_data
 ```

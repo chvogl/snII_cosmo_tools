@@ -1,5 +1,5 @@
 import numpy as np
-from style import get_styled_html_table
+from .style import get_styled_html_table
 from IPython.display import display, HTML
 
 

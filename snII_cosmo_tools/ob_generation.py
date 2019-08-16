@@ -33,8 +33,11 @@ class OBGenerator(object):
 
     @classmethod
     def set_value(cls, ob, key, value):
-        return [re.sub(cls.value_regex,
-                       value, line) if key in line else line for line in ob]
+        return [
+            re.sub(cls.value_regex,
+                   value, line) if re.match(key + '\s+',
+                                            line) else line for line in ob
+        ]
 
     @property
     def ob_fname(self):

@@ -5,6 +5,9 @@ from astropy.coordinates import SkyCoord
 
 
 class Magnitude(object):
+    medium_limit = 21.0
+    bright_limit = 20.0
+
     def __init__(self, value, band):
         self.value = value
         self.band = band
@@ -26,6 +29,16 @@ class Magnitude(object):
                                           round(self.value, 2))
         return user_comment
 
+    @property
+    def brightness_category(self):
+        if self.value < self.bright_limit:
+            brightness_category = 'bright'
+        elif self.value < self.medium_limit:
+            brightness_category = 'medium'
+        else:
+            brightness_category = 'faint'
+        return brightness_category
+
 
 class OBGenerator(object):
     value_regex = re.compile('(?<=\")(?P<name>\S*)(?=\")') # noqa
@@ -41,11 +54,12 @@ class OBGenerator(object):
         self.template_ob = template_ob
 
     @classmethod
-    def from_row(cls, row):
+    def from_row(cls, row,
+                 template_ob='data/template_obs/ob_classification_faint.obx'):
         target_name = row.name
         coords = SkyCoord(row.RA, row.DEC, unit=(u.hourangle, u.deg))
         magnitude = Magnitude.from_row(row)
-        return cls(target_name, coords, magnitude)
+        return cls(target_name, coords, magnitude, template_ob)
 
     @property
     def ra(self):

@@ -1,5 +1,5 @@
 import numpy as np
-from .tns_downloader import TNSDownloader
+from snII_cosmo_tools.tns_downloader import TNSDownloader
 
 survey_link_dict = {
     'ALeRCE': 'http://alerce.online/vue/object/',

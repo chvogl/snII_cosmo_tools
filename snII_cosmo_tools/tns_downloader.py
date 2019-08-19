@@ -1,13 +1,19 @@
 import io
+import re
 import webbrowser
 import requests
 import pandas as pd
+import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 
 # http://astronotes.co.uk/blog/2016/01/28/Parsing-The-Transient-Name-Server.html
 query_dict = {"date_start[date]": None,
               "date_end[date]": "2100-01-01",
               "num_page": "1000"}
+
+
+class TNSDownloadError(Exception):
+    pass
 
 
 class TNSDownloader(object):
@@ -54,3 +60,50 @@ class TNSDownloader(object):
     @property
     def result_compact(self):
         return self.result[self.compact_repr]
+
+
+class TNSSpectrum(object):
+    spec_regex = re.compile('https:\S*\.ascii')
+    base_url = 'https://wis-tns.weizmann.ac.il/object/'
+
+    def __init__(self, name):
+        self.name = name.strip('AT').strip('SN').strip(' ')
+        self._spec = None
+        self._spec_url = None
+
+    @property
+    def url(self):
+        return self.base_url + self.name
+
+    @property
+    def spec_url(self):
+        if not self._spec_url:
+            print('Retrieving spec url')
+            html = requests.get(self.url)
+            possible_urls = re.findall(self.spec_regex, html.text)
+            N_urls = len(possible_urls)
+            if N_urls != 1:
+                print(possible_urls)
+                raise TNSDownloadError('Found {} possible urls'.format(N_urls))
+            else:
+                self._spec_url = possible_urls[0]
+        return self._spec_url
+
+    @property
+    def spec(self):
+        if self._spec is None:
+            print('Downloading spectrum')
+            spec_raw = requests.get(self.spec_url)
+            with io.StringIO(spec_raw.text) as spec_buff:
+                self._spec = pd.read_csv(spec_buff, comment='#',
+                                         names=['wave', 'flux', 'idk'],
+                                         header=None, sep=' ')
+        return self._spec
+
+    def plot(self):
+        fig = plt.figure()
+        plt.plot(self.spec.wave, self.spec.flux)
+        plt.ylabel('Flux')
+        plt.xlabel('Wavelength $[\AA]$')
+        plt.title('Classification spectrum')
+        return fig

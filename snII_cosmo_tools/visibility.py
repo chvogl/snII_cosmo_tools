@@ -83,29 +83,33 @@ class Visibility(object):
 
     def plot(self):
         self.fig = plt.figure()
-        self.line_obj = plt.plot(self.delta_midnight, self.alt)[0]
-        self.line_moon = plt.plot(self.delta_midnight, self.moon_alt,
-                                  linestyle='--', color='black')[0]
+        self.ax = self.fig.add_subplot(1, 1, 1)
+        self.line_obj = self.ax.plot(self.delta_midnight, self.alt)[0]
+        self.line_moon = self.ax.plot(self.delta_midnight, self.moon_alt,
+                                      linestyle='--', color='black')[0]
         moon_text = "Moon distance: {:.1f}".format(self.moon_distance_midnight)
         moon_illum = "Illum: {:.1f}".format(self.moon_illumination)
-        self.moon_distance = plt.text(-11.5, 85, moon_text, color='white',
-                                      bbox=dict(facecolor='black'))
-        self.moon_illum_text = plt.text(6.5, 85, moon_illum, color='white',
-                                        bbox=dict(facecolor='black'))
-        plt.xlim(-12, 12)
+        self.moon_distance = self.ax.text(-11.5, 85, moon_text, color='white',
+                                          bbox=dict(facecolor='black'))
+        self.moon_illum_text = self.ax.text(6.5, 85, moon_illum, color='white',
+                                            bbox=dict(facecolor='black'))
+        self.ax.set_xlim(-12, 12)
         plt.xticks(np.arange(13) * 2 - 12)
-        plt.ylim(0, 90)
-        plt.fill_between([self.sun_rise.value, 12], 0, 90,
-                         color='0.5', zorder=0)
-        plt.fill_between([-12, self.sun_set.value], 0, 90,
-                         color='0.5', zorder=0)
-        plt.fill_between([self.end_night.value, self.sun_rise.value], 0, 90,
-                         color='0.5', zorder=0, alpha=0.3)
-        plt.fill_between([self.sun_set.value, self.start_night.value], 0, 90,
-                         color='0.5', zorder=0, alpha=0.3)
-        plt.xlabel('Hours from Midnight')
-        plt.ylabel('Altitude [deg]')
+        self.ax.set_ylim(0, 90)
+        self.plot_twilight()
+        self.ax.set_xlabel('Hours from Midnight')
+        self.ax.set_ylabel('Altitude [deg]')
         return self.fig
+
+    def plot_twilight(self):
+        self.ax.fill_between([self.sun_rise.value, 12], 0, 90,
+                             color='0.5', zorder=0)
+        self.ax.fill_between([-12, self.sun_set.value], 0, 90,
+                             color='0.5', zorder=0)
+        self.ax.fill_between([self.end_night.value, self.sun_rise.value],
+                             0, 90, color='0.5', zorder=0, alpha=0.3)
+        self.ax.fill_between([self.sun_set.value, self.start_night.value],
+                             0, 90, color='0.5', zorder=0, alpha=0.3)
 
     @property
     def date_offset(self):
@@ -126,13 +130,16 @@ class Visibility(object):
         self.date_offset = date_offset
         self.line_obj.set_ydata(self.alt)
         self.line_moon.set_ydata(self.moon_alt)
-        self.fig.canvas.draw_idle()
+        if date_offset % 15 == 0:
+            self.ax.collections.clear()
+            self.plot_twilight()
         self.moon_distance.set_text(
             "Moon distance: {:.1f}".format(self.moon_distance_midnight)
         )
         self.moon_illum_text.set_text(
             "Illum: {:.1f}".format(self.moon_illumination)
         )
+        self.fig.canvas.draw_idle()
 
 
 class InteractiveVisibility(Visibility):

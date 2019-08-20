@@ -6,7 +6,7 @@ from .style import (highlight_dec_cut, highlight_visibility,
 from .tns_downloader import TNSDownloader, TNSSpectrum, TNSDownloadError
 from .filter_targets import TargetFilter, InteractiveTargetFilter
 from .visibility import insert_max_alt_in_frame, insert_gal_lat_in_frame
-from .visualization import get_aladin_coords
-from .visibility import Visibility
+from .visualization import TargetVisualizer
+from .visibility import Visibility, InteractiveVisibility
 from .redshift import GladeRedshiftCatalogue
 from .ob_generation import OBGenerator

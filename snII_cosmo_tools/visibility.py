@@ -1,23 +1,25 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import astropy.units as u
-from datetime import datetime
 from astropy.time import Time
-from astropy.coordinates import SkyCoord, EarthLocation, AltAz, get_sun
-
-
-paranal = EarthLocation.of_site('paranal')
+from datetime import datetime, timedelta
+from ipywidgets import IntSlider, interactive
+from astropy.coordinates import (SkyCoord, EarthLocation,
+                                 AltAz, get_sun, get_moon)
 
 
 class Visibility(object):
-    def __init__(self, skycoord, date=None, utcoffset=(-4 * u.hour),
-                 location=None):
-        if not date:
-            date = datetime.strftime(datetime.now(), '%Y-%m-%d')
+    def __init__(self, skycoord, utcoffset=(-4 * u.hour),
+                 location=None, date_offset=0):
+        self.date = datetime.strftime(
+            datetime.now() + timedelta(days=date_offset),
+            '%Y-%m-%d'
+        )
+        self._date_offset = date_offset
         if not location:
-            location = paranal
+            location = EarthLocation.of_site('paranal')
         self.location = location
-        self.date = date
+        self.utcoffset = utcoffset
         self.midnight = Time(self.date + ' 23:59:59') - utcoffset
         self.skycoord = skycoord
         self.delta_midnight = np.linspace(-12, 12, 100) * u.hour
@@ -30,8 +32,16 @@ class Visibility(object):
 
     @property
     def sun_alt(self):
-        return get_sun(self.delta_midnight + self.midnight).transform_to(
-            self.frame).alt
+        return get_sun(self.time).transform_to(self.frame).alt
+
+    @property
+    def moon_alt(self):
+        return get_moon(self.time).transform_to(self.frame).alt
+
+    @property
+    def moon_distance_midnight(self):
+        moon_coord = get_moon(self.midnight)
+        return moon_coord.separation(self.skycoord).to(u.deg).value
 
     @property
     def night_mask(self):
@@ -53,18 +63,80 @@ class Visibility(object):
     def end_night(self):
         return self.delta_midnight[self.sun_alt < -18 * u.deg].max()
 
+    @property
+    def sun_rise(self):
+        return self.delta_midnight[self.sun_alt < 0 * u.deg].max()
+
+    @property
+    def sun_set(self):
+        return self.delta_midnight[self.sun_alt < 0 * u.deg].min()
+
     def plot(self):
-        fig = plt.figure()
-        plt.plot(self.delta_midnight, self.alt)
+        self.fig = plt.figure()
+        self.line_obj = plt.plot(self.delta_midnight, self.alt)[0]
+        self.line_moon = plt.plot(self.delta_midnight, self.moon_alt,
+                                  linestyle='--', color='black')[0]
+        moon_text = "Moon distance: {:.1f}".format(self.moon_distance_midnight)
+        self.moon_distance = plt.text(-11.5, 85, moon_text, color='white',
+                                      bbox=dict(facecolor='black'))
         plt.xlim(-12, 12)
         plt.xticks(np.arange(13) * 2 - 12)
         plt.ylim(0, 90)
-        plt.fill_between([self.start_night.value,
-                          self.end_night.value], 0, 90,
+        plt.fill_between([self.sun_rise.value, 12], 0, 90,
                          color='0.5', zorder=0)
+        plt.fill_between([-12, self.sun_set.value], 0, 90,
+                         color='0.5', zorder=0)
+        plt.fill_between([self.end_night.value, self.sun_rise.value], 0, 90,
+                         color='0.5', zorder=0, alpha=0.3)
+        plt.fill_between([self.sun_set.value, self.start_night.value], 0, 90,
+                         color='0.5', zorder=0, alpha=0.3)
         plt.xlabel('Hours from Midnight')
         plt.ylabel('Altitude [deg]')
-        return fig
+        return self.fig
+
+    @property
+    def date_offset(self):
+        return self._date_offset
+
+    @date_offset.setter
+    def date_offset(self, offset):
+        self._date_offset = offset
+        self.date = datetime.strftime(
+            datetime.now() + timedelta(days=offset),
+            '%Y-%m-%d'
+        )
+        self.midnight = Time(self.date + ' 23:59:59') - self.utcoffset
+        self.frame = AltAz(obstime=self.midnight + self.delta_midnight,
+                           location=self.location)
+
+    def update_plot(self, date_offset):
+        self.date_offset = date_offset
+        self.line_obj.set_ydata(self.alt)
+        self.line_moon.set_ydata(self.moon_alt)
+        self.fig.canvas.draw_idle()
+        self.moon_distance.set_text(
+            "Moon distance: {:.1f}".format(self.moon_distance_midnight)
+        )
+
+
+class InteractiveVisibility(Visibility):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.plot()
+        self.date_offset_widget = IntSlider(
+            value=0,
+            min=0,
+            max=50,
+            step=1,
+            description='Days:',
+            disabled=False,
+            continuous_update=False,
+            orientation='horizontal',
+            readout=True,
+            readout_format='d'
+        )
+        self.interactive = interactive(self.update_plot,
+                                       date_offset=self.date_offset_widget)
 
 
 def get_max_alt_from_frame(df):

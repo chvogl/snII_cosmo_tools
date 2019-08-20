@@ -71,14 +71,27 @@ class Visibility(object):
     def sun_set(self):
         return self.delta_midnight[self.sun_alt < 0 * u.deg].min()
 
+    @property
+    def moon_illumination(self):
+        sun = get_sun(self.midnight)
+        moon = get_moon(self.midnight)
+        sep = sun.separation(moon)
+        phase_angle = np.arctan2(sun.distance * np.sin(sep),
+                                 moon.distance - sun.distance * np.cos(sep))
+        illumination = (1 + np.cos(phase_angle)) / 2.0
+        return 100 * illumination.value
+
     def plot(self):
         self.fig = plt.figure()
         self.line_obj = plt.plot(self.delta_midnight, self.alt)[0]
         self.line_moon = plt.plot(self.delta_midnight, self.moon_alt,
                                   linestyle='--', color='black')[0]
         moon_text = "Moon distance: {:.1f}".format(self.moon_distance_midnight)
+        moon_illum = "Illum: {:.1f}".format(self.moon_illumination)
         self.moon_distance = plt.text(-11.5, 85, moon_text, color='white',
                                       bbox=dict(facecolor='black'))
+        self.moon_illum_text = plt.text(6.5, 85, moon_illum, color='white',
+                                        bbox=dict(facecolor='black'))
         plt.xlim(-12, 12)
         plt.xticks(np.arange(13) * 2 - 12)
         plt.ylim(0, 90)
@@ -116,6 +129,9 @@ class Visibility(object):
         self.fig.canvas.draw_idle()
         self.moon_distance.set_text(
             "Moon distance: {:.1f}".format(self.moon_distance_midnight)
+        )
+        self.moon_illum_text.set_text(
+            "Illum: {:.1f}".format(self.moon_illumination)
         )
 
 

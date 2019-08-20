@@ -10,7 +10,7 @@ class GladeRedshiftCatalogue(object):
                  'HyperLEDA name', '2MASS name', 'SDSS-DR12 name', 'dist',
                  'dist_err', 'flag2', 'mu', 'abs_mag']
 
-    def __init__(self, fname, min_z=1e-3, max_z=0.5):
+    def __init__(self, fname, min_z=1e-2, max_z=0.5):
         self.data = pd.HDFStore(fname, mode='r').data
         self.data_description = pd.HDFStore(fname, mode='r').description
         self.data = self.data[self.data.z > min_z]

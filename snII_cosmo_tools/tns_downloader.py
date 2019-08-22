@@ -63,7 +63,7 @@ class TNSDownloader(object):
 
 
 class TNSSpectrum(object):
-    spec_regex = re.compile('https:\S*\.ascii')
+    spec_regex = re.compile('https:\S*\.ascii*')
     base_url = 'https://wis-tns.weizmann.ac.il/object/'
 
     def __init__(self, name):
@@ -95,9 +95,15 @@ class TNSSpectrum(object):
             print('Downloading spectrum')
             spec_raw = requests.get(self.spec_url)
             with io.StringIO(spec_raw.text) as spec_buff:
+                if 'ePESSTO' in self.spec_url:
+                    names = ['wave', 'flux']
+                    sep = '\t'
+                else:
+                    names = ['wave', 'flux', 'idk']
+                    sep = ' '
                 self._spec = pd.read_csv(spec_buff, comment='#',
-                                         names=['wave', 'flux', 'idk'],
-                                         header=None, sep=' ')
+                                         names=names,
+                                         header=None, sep=sep)
         return self._spec
 
     def plot(self):

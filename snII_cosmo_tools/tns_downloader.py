@@ -25,12 +25,17 @@ class TNSDownloader(object):
                     'Discovery Mag', 'Discovery Mag Filter',
                     'Discovery Date (UT)']
 
-    def __init__(self, number_of_days=1.):
+    obj_type_keys = {'SN II': 10, 'SN Ia': 3, 'SN IIP': 11}
+
+    def __init__(self, number_of_days=1., obj_type=None):
         self._search = None
+        self.obj_type = obj_type
         self.start_date = datetime.strftime(
             datetime.now() - timedelta(number_of_days), '%Y-%m-%d')
         self.query_dict = query_dict.copy()
         self.query_dict['date_start[date]'] = self.start_date
+        if self.obj_type:
+            self.query_dict['objtype[]'] = self.obj_type_keys[self.obj_type]
 
     def query(self):
         print("Making a query!")

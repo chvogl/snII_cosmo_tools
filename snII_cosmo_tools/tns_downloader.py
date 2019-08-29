@@ -27,7 +27,8 @@ class TNSDownloader(object):
 
     obj_type_keys = {'SN II': 10, 'SN Ia': 3, 'SN IIP': 11}
 
-    def __init__(self, number_of_days=1., obj_type=None):
+    def __init__(self, number_of_days=1., obj_type=None,
+                 only_classified_sne=False):
         self._search = None
         self.obj_type = obj_type
         self.start_date = datetime.strftime(
@@ -36,6 +37,8 @@ class TNSDownloader(object):
         self.query_dict['date_start[date]'] = self.start_date
         if self.obj_type:
             self.query_dict['objtype[]'] = self.obj_type_keys[self.obj_type]
+        if only_classified_sne:
+           self.query_dict["classified_sne"] = "1"
 
     def query(self):
         print("Making a query!")

@@ -1,4 +1,5 @@
 import os
+import getpass
 import datetime
 import warnings
 import pandas as pd
@@ -6,10 +7,9 @@ from ipywidgets import Textarea, Button
 
 
 class TargetArchiver(object):
-    def __init__(self, row, archive_path='data/targets_archive.hdf'):
+    def __init__(self, row):
         self.row = row
         self.name = row.name
-        self.archive_path = archive_path
         self.button = Button(description='Archive object!')
         self.button.style.button_color = 'orange'
         self.text = Textarea(
@@ -20,12 +20,6 @@ class TargetArchiver(object):
         )
         self.check_if_archived()
         self.button.on_click(self.on_button_clicked)
-
-    def check_if_archived(self):
-        if os.path.isfile(self.archive_path):
-            with pd.HDFStore(self.archive_path) as hdf:
-                if self.name in hdf['/archived_targets'].index:
-                    self.deactivate_button()
 
     def on_button_clicked(self, b):
         self.deactivate_button()
@@ -44,6 +38,9 @@ class TargetArchiver(object):
         row_with_comment = row_with_comment.append(
             pd.Series({'Time archived': self.time_now})
         )
+        row_with_comment = row_with_comment.append(
+            pd.Series({'Archived by': getpass.getuser()})
+        )
         return row_with_comment
 
     @property
@@ -53,6 +50,24 @@ class TargetArchiver(object):
             columns=self.row_with_comment.index,
             index=[self.row.name]
         )
+
+    def archive(self):
+        pass
+
+    def check_if_archived(self):
+        pass
+
+    @property
+    def time_now(self):
+        return datetime.datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+
+
+class LocalTargetArchiver(TargetArchiver):
+    def __init__(self, row, archive_path='data/targets_archive.hdf'):
+        self.archive_path = archive_path
+        super().__init__(row)
 
     def archive(self):
         with pd.HDFStore(self.archive_path) as hdf:
@@ -66,8 +81,8 @@ class TargetArchiver(object):
                 warnings.simplefilter("ignore")
                 hdf.put('archived_targets', archived_targets)
 
-    @property
-    def time_now(self):
-        return datetime.datetime.now().strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+    def check_if_archived(self):
+        if os.path.isfile(self.archive_path):
+            with pd.HDFStore(self.archive_path) as hdf:
+                if self.name in hdf['/archived_targets'].index:
+                    self.deactivate_button()

@@ -1,9 +1,12 @@
 import os
+import bs4
+import gspread
 import getpass
 import datetime
 import warnings
 import pandas as pd
-from ipywidgets import Textarea, Button
+from ipywidgets import Textarea, Button, Dropdown
+from oauth2client.service_account import ServiceAccountCredentials
 
 
 class TargetArchiver(object):
@@ -17,6 +20,12 @@ class TargetArchiver(object):
             placeholder='Add comment on object!',
             description='Comment:',
             disabled=False
+        )
+        self.destination = Dropdown(
+            options=['classification targets', 'misc'],
+            value='classification targets',
+            description='Archive as:',
+            disabled=False,
         )
         self.check_if_archived()
         self.button.on_click(self.on_button_clicked)
@@ -86,3 +95,44 @@ class LocalTargetArchiver(TargetArchiver):
             with pd.HDFStore(self.archive_path) as hdf:
                 if self.name in hdf['/archived_targets'].index:
                     self.deactivate_button()
+
+
+class GspreadTargetArchiver(TargetArchiver):
+    json_keyfile_name = None  # is set in __init__.py
+    scope = ['https://spreadsheets.google.com/feeds',
+             'https://www.googleapis.com/auth/drive']
+
+    def __init__(self, row):
+        self.credentials = ServiceAccountCredentials.from_json_keyfile_name(
+            self.json_keyfile_name, self.scope
+        )
+        self.client = gspread.authorize(self.credentials)
+        self.sheet = self.client.open('snII_cosmo_targets_archive')
+        self._gspread_columns = None
+        super().__init__(row)
+
+    def archive(self):
+        row = self.row_with_comment.astype(str).to_list()
+        self.sheet.worksheet(self.destination.value).insert_row(row, 2)
+
+    @property
+    def archived_objects(self):
+        archived_objects = pd.DataFrame(self.sheet.sheet1.get_all_records(),
+                                        columns=self.gspread_columns)
+        archived_objects.index = self.get_name_from_href(archived_objects.Name)
+        archived_objects.index.name = 'Name'
+        return archived_objects
+
+    @property
+    def gspread_columns(self):
+        if not self._gspread_columns:
+            self._gspread_columns = self.sheet.sheet1.row_values(1)
+        return self._gspread_columns
+
+    @staticmethod
+    def get_name_from_href(html_refs):
+        names = [
+            bs4.BeautifulSoup(html_ref,
+                              'html.parser').text for html_ref in html_refs
+        ]
+        return names

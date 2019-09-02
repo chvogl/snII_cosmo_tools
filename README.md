@@ -8,7 +8,6 @@ conda env create -f env.yml
 conda activate snII_cosmo_tools
 python setup.py install
 cd snII_cosmo_tools
-mkdir redshift_data
 ```
 Download the [redshift data](https://drive.google.com/file/d/1pMsBluOxjmcv9FVdKGG1shpPMxtieX9-/view?usp=sharing) from google drive and move it into the `redshift_data` folder.
 To enable the ipyaladin widget, execute the following:

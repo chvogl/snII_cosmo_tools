@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import astropy.units as units
 from astropy.cosmology import Planck15
@@ -25,13 +26,33 @@ class GladeRedshiftCatalogue(object):
         matches = self.data[sep < max_dist_kpc]
         matches.insert(0, 'd_proj[kpc]', sep[sep < max_dist_kpc])
         if len(matches) > 0:
-            mu = Planck15.distmod(matches.z.values).value
-            abs_mag = mag - mu
-            matches.insert(1, 'mu', mu)
-            matches.insert(2, 'abs_mag', abs_mag)
+            self.insert_mu_absmag_in_frame(matches, matches.z.values, mag)
 
         matches = matches.sort_values('d_proj[kpc]')
         return matches
+
+    @staticmethod
+    def insert_mu_absmag_in_frame(frame, z, mag):
+        mu = Planck15.distmod(z).value
+        abs_mag = mag - mu
+        frame.insert(1, 'mu', mu)
+        frame.insert(2, 'abs_mag', abs_mag)
+
+    @classmethod
+    def get_tns_host_from_row(cls, row):
+        redshift_table = None
+        if np.isfinite(row['Host Redshift']):
+            redshift_table = pd.DataFrame(row.values[np.newaxis, :],
+                                          columns=row.index)
+            redshift_table = redshift_table[['Host Name', 'Host Redshift']]
+            cls.insert_mu_absmag_in_frame(
+                redshift_table, z=row.loc['Host Redshift'],
+                mag=row['Discovery Mag']
+            )
+            redshift_table = redshift_table.rename(
+                columns={'Host Redshift': 'z'}
+            )
+            return redshift_table[["z", "Host Name", "mu", "abs_mag"]]
 
     # TODO: improve logic
     def generate_aladin_table(self, m):

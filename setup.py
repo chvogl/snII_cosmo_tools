@@ -6,4 +6,5 @@ setup(
     author='Christian Vogl',
     author_email='cvogl@mpa-garching.mpg.de',
     packages=find_packages(),
+    package_data={'snII_cosmo_tools': ['templates/*.html']}
 )

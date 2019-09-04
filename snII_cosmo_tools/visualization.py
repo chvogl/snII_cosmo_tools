@@ -3,9 +3,15 @@ from IPython.display import HTML
 from astropy.coordinates import SkyCoord
 from ipywidgets import Layout
 import ipyaladin.aladin_widget as ipal
+from jinja2 import Environment, PackageLoader, select_autoescape
 
 
 class TargetVisualizer(object):
+    env = Environment(
+        loader=PackageLoader('snII_cosmo_tools'),
+        autoescape=select_autoescape(['html', 'xml'])
+    )
+
     def __init__(self, coords, name, fov=0.0333, layout=None):
         if not layout:
             layout = Layout(width='40.00%')
@@ -29,6 +35,14 @@ class TargetVisualizer(object):
         else:
             survey = 'P/PanSTARRS/DR1/color-z-zg-g'
         return survey
+
+    @property
+    def sdss_html(self):
+        template = self.env.get_template('sdss_template.html')
+        html = template.render(ra=str(self.coords.ra.value),
+                               dec=str(self.coords.dec.value),
+                               scale=0.5)
+        return html
 
     @property
     def html_label(self):

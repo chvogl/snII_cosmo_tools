@@ -56,7 +56,7 @@ class InteractiveTargetFilter(TargetFilter):
             readout_format='.1f',
         )
         self.mag_cut = FloatSlider(
-            value=17.,
+            value=17.8,
             min=10.,
             max=22.,
             step=0.25,

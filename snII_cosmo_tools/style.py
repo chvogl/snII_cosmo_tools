@@ -5,7 +5,8 @@ survey_link_dict = {
     'ALeRCE': 'http://alerce.online/vue/object/',
     'ZTF': 'http://alerce.online/vue/object/',
     'ATLAS': 'https://star.pst.qub.ac.uk/sne/atlas4/',
-    'Pan-STARRS1': 'https://star.pst.qub.ac.uk/sne/ps13pi/psdb/'
+    'Pan-STARRS1': 'https://star.pst.qub.ac.uk/sne/ps13pi/psdb/',
+    'GaiaAlerts': 'http://gsaweb.ast.cam.ac.uk/alerts/alert/'
 }
 
 

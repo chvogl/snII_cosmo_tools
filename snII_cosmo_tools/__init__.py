@@ -10,7 +10,8 @@ from .filter_targets import TargetFilter, InteractiveTargetFilter
 from .visibility import insert_max_alt_in_frame, insert_gal_lat_in_frame
 from .visualization import TargetVisualizer
 from .visibility import Visibility, InteractiveVisibility
-from .redshift import GladeRedshiftCatalogue, TwodFRedshiftCatalogue
+from .redshift import (GladeRedshiftCatalogue, TwodFRedshiftCatalogue,
+                       SDSSRedshiftCatalogue)
 from .ob_generation import OBGenerator
 
 json_keyfile_names = glob.glob('auth/*.json')

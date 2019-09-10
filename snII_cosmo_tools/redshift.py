@@ -107,3 +107,11 @@ class TwodFRedshiftCatalogue(RedshiftCatalogue):
     def get_sky_coords(data):
         return SkyCoord(data.ra2000, data.dec2000,
                         unit=(units.hourangle, units.deg))
+
+
+class SDSSRedshiftCatalogue(RedshiftCatalogue):
+    short_name = 'sdss'
+
+    @staticmethod
+    def get_sky_coords(data):
+        return SkyCoord(data.ra, data.dec, frame="icrs", unit=units.deg)

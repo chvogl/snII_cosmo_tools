@@ -1,3 +1,5 @@
+import io
+import imageio
 import numpy as np
 import matplotlib.pyplot as plt
 import astropy.units as u
@@ -81,18 +83,23 @@ class Visibility(object):
         illumination = (1 + np.cos(phase_angle)) / 2.0
         return 100 * illumination.value
 
-    def plot(self):
-        self.fig = plt.figure()
+    def plot(self, fig=None):
+        if not fig:
+            fig = plt.figure()
+        self.fig = fig
         self.ax = self.fig.add_subplot(1, 1, 1)
         self.line_obj = self.ax.plot(self.delta_midnight, self.alt)[0]
         self.line_moon = self.ax.plot(self.delta_midnight, self.moon_alt,
                                       linestyle='--', color='black')[0]
         moon_text = "Moon distance: {:.1f}".format(self.moon_distance_midnight)
         moon_illum = "Illum: {:.1f}".format(self.moon_illumination)
+        date = "Date: {}  +{} d".format(self.date, self.date_offset)
         self.moon_distance = self.ax.text(-11.5, 85, moon_text, color='white',
                                           bbox=dict(facecolor='black'))
         self.moon_illum_text = self.ax.text(6.5, 85, moon_illum, color='white',
                                             bbox=dict(facecolor='black'))
+        self.date_text = self.ax.text(-11.5, 5, date, color='white',
+                                      bbox=dict(facecolor='black'))
         self.ax.set_xlim(-12, 12)
         plt.xticks(np.arange(13) * 2 - 12)
         self.ax.set_ylim(0, 90)
@@ -139,7 +146,22 @@ class Visibility(object):
         self.moon_illum_text.set_text(
             "Illum: {:.1f}".format(self.moon_illumination)
         )
+        self.date_text.set_text("Date: {}  +{} d".format(self.date,
+                                                         self.date_offset))
         self.fig.canvas.draw_idle()
+
+    def create_gif(self, offsets, duration=0.5, dpi=200):
+        images = []
+        self.plot()
+        for i in offsets:
+            buf = io.BytesIO()
+            self.update_plot(i)
+            self.fig.savefig(buf, dpi=dpi)
+            buf.seek(0)
+            images.append(imageio.imread(buf))
+        out = imageio.mimwrite('<bytes>', images,
+                               duration=duration, format='gif')
+        return io.BytesIO(out)
 
 
 class InteractiveVisibility(Visibility):

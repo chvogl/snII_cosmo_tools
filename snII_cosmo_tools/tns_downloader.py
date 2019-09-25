@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 # http://astronotes.co.uk/blog/2016/01/28/Parsing-The-Transient-Name-Server.html
 query_dict = {"date_start[date]": None,
               "date_end[date]": "2100-01-01",
-              "num_page": "1000"}
+              "num_page": "500"}
 
 
 class TNSDownloadError(Exception):

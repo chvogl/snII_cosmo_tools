@@ -53,6 +53,16 @@ class TNSDownloader(object):
         csv_query = requests.get(self._search.url + "&format=csv")
         buff = io.StringIO(csv_query.content.decode("utf-8"))
         self._result = pd.read_csv(buff)
+        if len(self._result) == self.max_target_num:
+            msg = "Number of targets exceeds maximum of {}.".format(
+                self.max_target_num
+            )
+            msg += "\nAdditional targets would get discarded."
+            raise TNSDownloadError(msg)
+
+    @property
+    def max_target_num(self):
+        return int(self.query_dict['num_page'])
 
     def open_in_browser(self):
         webbrowser.open(self._search.url)

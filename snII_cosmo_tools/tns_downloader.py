@@ -1,16 +1,15 @@
 import io
-import re
 import json
-import webbrowser
 import requests
-import pandas as pd
+import webbrowser
 import numpy as np
+import pandas as pd
 from jinja2 import Template
 from bs4 import BeautifulSoup
-import matplotlib.pyplot as plt
 from bokeh.plotting import figure
-from bokeh.models.sources import ColumnDataSource
+from bokeh.palettes import colorblind
 from bokeh.models import Arrow, Label, HoverTool
+from bokeh.models.sources import ColumnDataSource
 from datetime import datetime, timedelta
 
 # http://astronotes.co.uk/blog/2016/01/28/Parsing-The-Transient-Name-Server.html
@@ -88,7 +87,6 @@ class TNSDownloader(object):
 
 
 class TNSSpectrum(object):
-    spec_regex = re.compile('https:\S*\.ascii*')
     base_url = 'https://wis-tns.weizmann.ac.il/object/'
 
     def __init__(self, name):
@@ -103,41 +101,56 @@ class TNSSpectrum(object):
     @property
     def spec_url(self):
         if not self._spec_url:
-            print('Retrieving spec url')
+            print('Retrieving spec urls')
             html = requests.get(self.url)
-            possible_urls = re.findall(self.spec_regex, html.text)
-            N_urls = len(possible_urls)
-            if N_urls != 1:
-                print(possible_urls)
-                raise TNSDownloadError('Found {} possible urls'.format(N_urls))
-            else:
-                self._spec_url = possible_urls[0]
+            bs = BeautifulSoup(html.text, 'html.parser')
+            ascii_cell = bs.find_all('td', class_="cell-asciifile")
+            urls = [elem.find('a')['href'] for elem in ascii_cell]
+            groups = [
+                group.text for group in bs.find_all(
+                    id='spectra-fieldset')[0].find_all(
+                        'td', class_='cell-groups')
+            ]
+
+            if len(urls) == 0:
+                raise TNSDownloadError('Found no possible urls')
+            self._spec_url = dict(zip(groups, urls))
         return self._spec_url
 
     @property
     def spec(self):
         if self._spec is None:
-            print('Downloading spectrum')
-            spec_raw = requests.get(self.spec_url)
-            with io.StringIO(spec_raw.text) as spec_buff:
-                if 'ePESSTO' in self.spec_url:
-                    names = ['wave', 'flux']
-                    sep = '\t'
-                else:
-                    names = ['wave', 'flux', 'idk']
-                    sep = ' '
-                self._spec = pd.read_csv(spec_buff, comment='#',
-                                         names=names,
-                                         header=None, sep=sep)
+            self._spec = {}
+            for group, url in self.spec_url.items():
+                print('Downloading spectrum')
+                spec_raw = requests.get(url)
+                with io.StringIO(spec_raw.text) as spec_buff:
+                    if 'ePESSTO' in url:
+                        names = ['wave', 'flux']
+                        sep = '\t'
+                    elif 'Asiago' in url:
+                        names = ['wave', 'flux']
+                        sep = '  '
+                    else:
+                        names = ['wave', 'flux', 'idk']
+                        sep = ' '
+                    self._spec[group] = pd.read_csv(spec_buff, comment='#',
+                                                    names=names,
+                                                    header=None, sep=sep)
         return self._spec
 
     def plot(self):
-        fig = plt.figure()
-        plt.plot(self.spec.wave, self.spec.flux)
-        plt.ylabel('Flux')
-        plt.xlabel('Wavelength $[\AA]$')
-        plt.title('Classification spectrum')
-        return fig
+        f = figure(x_axis_label='Wavelength [\u00C5]', y_axis_label='Flux',
+                   width=400, height=170)
+        cols = colorblind['Colorblind'][len(self.spec) + 2]
+        for i, (group, data) in enumerate(self.spec.items()):
+            if not group:
+                group = 'unknow'
+            f.line(x=data.wave, y=data.flux, legend=group, color=cols[i],
+                   line_width=1.5)
+        f.legend.click_policy = "hide"
+        f.sizing_mode = 'scale_width'
+        return f
 
 
 class ZtfLightCurveDownloader(object):

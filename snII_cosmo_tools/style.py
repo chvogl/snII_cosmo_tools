@@ -70,7 +70,7 @@ def insert_survey_links_into_df(targets):
                             targets['Disc. Internal Name']):
         groups = groups.split(',')
         group = groups[0]
-        if group in survey_link_dict:
+        if group in survey_link_dict and type(name) is str:
             link = survey_link_dict[group]
             if group not in ['ATLAS', 'Pan-STARRS1']:
                 link += name

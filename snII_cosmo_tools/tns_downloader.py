@@ -13,9 +13,9 @@ from bokeh.models.sources import ColumnDataSource
 from datetime import datetime, timedelta
 
 # http://astronotes.co.uk/blog/2016/01/28/Parsing-The-Transient-Name-Server.html
-query_dict = {"date_start[date]": None,
-              "date_end[date]": "2100-01-01",
-              "num_page": "500"}
+query_dict = {"num_page": "500",
+              "sort": 'desc',
+              "order": "discoverydate"}
 
 
 class TNSDownloadError(Exception):
@@ -34,13 +34,24 @@ class TNSDownloader(object):
     obj_type_keys = {'SN II': 10, 'SN Ia': 3, 'SN IIP': 11}
 
     def __init__(self, number_of_days=1., obj_type=None,
-                 only_classified_sne=False):
+                 only_classified_sne=False, date_range=None):
         self._search = None
         self.obj_type = obj_type
-        self.start_date = datetime.strftime(
-            datetime.now() - timedelta(number_of_days), '%Y-%m-%d')
+        if not date_range:
+            self.start_date = datetime.strftime(
+                datetime.now() - timedelta(number_of_days), '%Y-%m-%d')
+            self.end_date = "2100-01-01"
+        else:
+            self.start_date = date_range[0]
+            if len(date_range) == 1:
+                self.end_date = date_range[0]
+            elif len(date_range) == 2:
+                self.end_date = date_range[1]
+            else:
+                raise ValueError('date_range must have length 1 or 2.')
         self.query_dict = query_dict.copy()
         self.query_dict['date_start[date]'] = self.start_date
+        self.query_dict['date_end[date]'] = self.end_date
         if self.obj_type:
             self.query_dict['objtype[]'] = self.obj_type_keys[self.obj_type]
         if only_classified_sne:

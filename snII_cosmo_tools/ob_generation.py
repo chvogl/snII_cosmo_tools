@@ -2,6 +2,7 @@ import re
 import os
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from .tns_downloader import TNSObjectDownloader
 
 
 class Magnitude(object):
@@ -62,6 +63,13 @@ class OBGenerator(object):
         coords = SkyCoord(row.RA, row.DEC, unit=(u.hourangle, u.deg))
         magnitude = Magnitude.from_row(row)
         return cls(target_name, coords, magnitude, template_ob, suffix=suffix)
+
+    @classmethod
+    def from_name(cls, name,
+                  template_ob='data/template_obs/ob_classification_faint.obx',
+                  suffix=''):
+        row = TNSObjectDownloader(name).series
+        return cls.from_row(row, template_ob, suffix)
 
     @property
     def ra(self):

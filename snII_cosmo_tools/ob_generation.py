@@ -45,21 +45,23 @@ class OBGenerator(object):
 
     def __init__(self, target_name, coords, magnitude,
                  template_ob='data/template_obs/ob_classification_faint.obx',
-                 prefix='TOO_', dest_path='data/generated_obs'):
+                 prefix='TOO_', dest_path='data/generated_obs', suffix=''):
         self.target_name = target_name
         self.coords = coords
         self.magnitude = magnitude
         self.prefix = prefix
         self.dest_path = dest_path
         self.template_ob = template_ob
+        self.suffix = suffix
 
     @classmethod
     def from_row(cls, row,
-                 template_ob='data/template_obs/ob_classification_faint.obx'):
+                 template_ob='data/template_obs/ob_classification_faint.obx',
+                 suffix=''):
         target_name = row.name
         coords = SkyCoord(row.RA, row.DEC, unit=(u.hourangle, u.deg))
         magnitude = Magnitude.from_row(row)
-        return cls(target_name, coords, magnitude, template_ob)
+        return cls(target_name, coords, magnitude, template_ob, suffix=suffix)
 
     @property
     def ra(self):
@@ -80,22 +82,37 @@ class OBGenerator(object):
 
     @property
     def ob_fname(self):
-        return self.prefix + self.target_name.replace(' ', '') + '.obx'
+        return self.ob_fname_without_suffix + '_' + self.suffix + '.obx'
 
-    def generate_ob(self):
+    @property
+    def ob_fname_without_suffix(self):
+        return self.prefix + self.target_name.replace(' ', '')
+
+    @property
+    def ob_name(self):
+        name = 'TOO_SN-classification-{}'.format(
+            self.target_name.replace(' ', '')
+        )
+        return name
+
+    def generate_ob(self, ob_file=None):
         with open(self.template_ob) as f:
             ob = f.readlines()
 
         ob = self.set_value(ob, 'TARGET.NAME', self.target_name)
+        ob = self.set_value(ob, 'name', self.ob_name)
         ob = self.set_value(ob, 'ra', self.ra)
         ob = self.set_value(ob, 'dec', self.dec)
         ob = self.set_value(ob, 'userComments', self.magnitude.ob_user_comment)
 
-        if not os.path.isdir(self.dest_path):
-            os.mkdir(self.dest_path)
+        if ob_file:
+            ob_file.writelines(ob)
+        else:
+            if not os.path.isdir(self.dest_path):
+                os.mkdir(self.dest_path)
 
-        with open(os.path.join(self.dest_path, self.ob_fname), 'w+') as f:
-            f.writelines(ob)
+            with open(os.path.join(self.dest_path, self.ob_fname), 'w+') as f:
+                f.writelines(ob)
 
     def __call__(self, button):
         self.generate_ob()

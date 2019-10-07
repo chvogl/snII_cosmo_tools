@@ -97,6 +97,21 @@ class TNSDownloader(object):
         return self.result[self.compact_repr]
 
 
+class TNSObjectDownloader(TNSDownloader):
+    def __init__(self, name):
+        self.name = name
+        self.query_dict = query_dict.copy()
+        self.query_dict['name'] = name
+        self._search = None
+
+    @property
+    def series(self):
+        series = pd.Series(self.result.values.flatten(),
+                           index=self.result.columns)
+        series.name = self.name
+        return series
+
+
 class TNSSpectrum(object):
     base_url = 'https://wis-tns.weizmann.ac.il/object/'
 

@@ -3,9 +3,11 @@ import imageio
 import numpy as np
 import matplotlib.pyplot as plt
 import astropy.units as u
-from astropy.time import Time
+from astropy.time import Time, TimeDelta
 from datetime import datetime, timedelta
 from ipywidgets import IntSlider, interactive
+from matplotlib.dates import DateFormatter
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from astropy.coordinates import (SkyCoord, EarthLocation,
                                  AltAz, get_sun, get_moon)
 
@@ -75,8 +77,11 @@ class Visibility(object):
 
     @property
     def moon_illumination(self):
-        sun = get_sun(self.midnight)
-        moon = get_moon(self.midnight)
+        return self.get_moon_illumination(self.midnight)
+
+    def get_moon_illumination(self, time):
+        sun = get_sun(time)
+        moon = get_moon(time)
         sep = sun.separation(moon)
         phase_angle = np.arctan2(sun.distance * np.sin(sep),
                                  moon.distance - sun.distance * np.cos(sep))
@@ -162,6 +167,43 @@ class Visibility(object):
         out = imageio.mimwrite('<bytes>', images,
                                duration=duration, format='gif')
         return io.BytesIO(out)
+
+    def time_series(self, number_of_days=14.):
+        dt_value = 15 * u.min
+        dt = TimeDelta(dt_value)
+        num = (number_of_days * u.day / dt_value).to(
+            u.dimensionless_unscaled
+        )
+        return self.midnight + dt * np.arange(num)
+
+    def moon_distance_series(self, number_of_days=14.):
+        time = self.time_series(number_of_days)
+        moon_coord = get_moon(time)
+        return time, moon_coord.separation(self.skycoord).to(u.deg).value
+
+    def plot_moon_distance_series(self, number_of_days=14.):
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1)
+        t, d = self.moon_distance_series(number_of_days)
+        illum = self.get_moon_illumination(t)
+        s = ax.scatter(t.plot_date, d, c=illum,
+                       s=3, vmin=0., vmax=100., cmap='bwr')
+        ax.set_xlim(t.plot_date.min(), t.plot_date.max())
+        ax.fill_between(
+            t.plot_date, np.ones(len(t)) * 0.,
+            np.ones(len(t)) * 30., color='grey', alpha=0.3
+        )
+        plt.gcf().autofmt_xdate()  # orient date labels at a slant
+        ax.set_xlabel('Time UT')
+        ax.set_ylabel('Moon distance')
+        ax.set_ylim(0, 1.25 * d.max())
+        formatter = DateFormatter('%Y-%m-%d %H:%M')
+        ax.xaxis.set_major_formatter(formatter)
+        cax = inset_axes(ax, width="25%", height="6%", loc=2)
+        cbar = fig.colorbar(s, cax=cax, orientation='horizontal')
+        cbar.set_label('Illumination')
+        plt.tight_layout()
+        return fig, ax
 
 
 class InteractiveVisibility(Visibility):

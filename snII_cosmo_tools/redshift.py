@@ -42,18 +42,26 @@ class RedshiftCatalogue(object):
         frame.insert(2, 'abs_mag', abs_mag)
 
     @classmethod
-    def get_tns_host_from_row(cls, row):
+    def get_tns_host_from_row(cls, row, obj='host'):
         redshift_table = None
-        if np.isfinite(row['Host Redshift']):
+        if obj == 'host':
+            column_name = 'Host Redshift'
+        elif obj == 'SN':
+            column_name = 'Redshift'
+        else:
+            raise ValueError(
+                '{} is not a valid object type. Select host or SN'.format(obj)
+            )
+        if np.isfinite(row[column_name]):
             redshift_table = pd.DataFrame(row.values[np.newaxis, :],
                                           columns=row.index)
-            redshift_table = redshift_table[['Host Name', 'Host Redshift']]
+            redshift_table = redshift_table[['Host Name', column_name]]
             cls.insert_mu_absmag_in_frame(
-                redshift_table, z=row.loc['Host Redshift'],
+                redshift_table, z=row.loc[column_name],
                 mag=row['Discovery Mag']
             )
             redshift_table = redshift_table.rename(
-                columns={'Host Redshift': 'z'}
+                columns={column_name: 'z'}
             )
             return redshift_table[["z", "Host Name", "mu", "abs_mag"]]
 

@@ -109,6 +109,16 @@ class TwodFRedshiftCatalogue(RedshiftCatalogue):
                         unit=(units.hourangle, units.deg))
 
 
+class SixdFRedshiftCatalogue(RedshiftCatalogue):
+    short_name = '6dF'
+    comp_repr = ['z', 'TARGETNAME', 'ra', 'dec', 'mu', 'abs_mag']
+
+    @staticmethod
+    def get_sky_coords(data):
+        return SkyCoord(data.ra, data.dec,
+                        unit=(units.hourangle, units.deg))
+
+
 class SDSSRedshiftCatalogue(RedshiftCatalogue):
     short_name = 'sdss'
 
